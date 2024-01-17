@@ -1,25 +1,48 @@
-import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View, Image, ScrollView } from "react-native";
-import BasketballImage from "./assets/products/basketball1.jpeg";
-import AvatarImage from "./assets/icons/avatar.png";
 import { API_URL } from "./config/constants.js";
+import avatarImg from "./assets/icons/avatar.png";
+import React from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  ScrollView,
+  Dimensions,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+
+import Carousel from "react-native-reanimated-carousel";
+
 import axios from "axios";
-import React, { useEffect, useState } from "react";
 import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime.js";
+import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/ko";
 
 dayjs.extend(relativeTime);
 dayjs.locale("ko");
 
 export default function App() {
-  const [products, setProducts] = useState([]);
-  useEffect(() => {
+  const [products, setProducts] = React.useState([]);
+  const [banners, setBanners] = React.useState([]);
+
+  React.useEffect(() => {
     axios
       .get(`${API_URL}/products`)
       .then((result) => {
-        console.log(result.data.products);
-        setProducts(result.data.products);
+        const products = result.data.products;
+        setProducts(products);
+      })
+      .catch((error) => {
+        console.log("error :", error);
+      });
+
+    axios
+      .get(`${API_URL}/banners`)
+      .then((result) => {
+        const banners = result.data.banners;
+        console.log(banners);
+        setBanners(banners);
       })
       .catch((error) => {
         console.log("error :", error);
@@ -29,33 +52,57 @@ export default function App() {
   return (
     <View style={styles.container}>
       <ScrollView>
-        <Text style={styles.HeadLine}>판매되는 상품들</Text>
-        <View style={styles.productList}>
-          {products.map((item, index) => {
+        <Carousel
+          data={banners}
+          width={Dimensions.get("window").width}
+          height={200}
+          autoPlay={true}
+          sliderWidth={Dimensions.get("window").width}
+          itemWidth={Dimensions.get("window").width}
+          itemHeight={200}
+          renderItem={(obj) => {
             return (
-              <View style={styles.productCard}>
+              <TouchableOpacity
+                onPress={() => {
+                  Alert.alert("배너 클릭");
+                }}
+              >
+                <Image
+                  style={styles.bannerImage}
+                  source={{ uri: `${API_URL}/${obj.item.imageUrl}` }}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            );
+          }}
+        />
+        <Text style={styles.headline}>판매되는 상품들!!</Text>
+        <View style={styles.productList}>
+          {products.map((product, index) => {
+            return (
+              <View key={index} style={styles.productCard}>
+                {product.soldout === 1 && <View style={styles.productBlur} />}
                 <View>
                   <Image
-                    style={styles.productImage}
-                    source={{ uri: `${API_URL}/${item.imageUrl}` }}
+                    style={styles.productImg}
+                    source={{
+                      url: `${API_URL}/${product.imageUrl}`,
+                    }}
                     resizeMode={"contain"}
                   />
                 </View>
-                <View style={styles.productContent}>
-                  <Text style={styles.productName}>{item.name}</Text>
-                  <Text style={styles.productPrice}>{item.price}</Text>
+                <View style={styles.productContents}>
+                  <Text style={styles.productName}>{product.name}</Text>
+                  <Text style={styles.productPrice}>{product.price}원</Text>
                   <View style={styles.productFooter}>
                     <View style={styles.productSeller}>
-                      <Image
-                        style={styles.productAvatar}
-                        source={AvatarImage}
-                      />
-                      <Text style={styles.prodcutSellerName}>
-                        {item.seller}
+                      <Image style={styles.productAvatar} source={avatarImg} />
+                      <Text style={styles.productSellerName}>
+                        {product.seller}
                       </Text>
                     </View>
                     <Text style={styles.productDate}>
-                      {dayjs(item.createdAt).fromNow()}
+                      {dayjs(product.created_at).fromNow()}
                     </Text>
                   </View>
                 </View>
@@ -69,30 +116,44 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  headline: {
+    fontSize: 24,
+    fontWeight: "800",
+    marginTop: 10,
+    marginBottom: 10,
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",
     paddingTop: 32,
+    margin: 10,
   },
   productCard: {
-    width: 320,
+    width: "100%",
     borderColor: "rgb(230,230,230)",
     borderWidth: 1,
     borderRadius: 16,
     backgroundColor: "white",
-    marginTop: 10,
-    marginBottom: 8,
+    marginBottom: 10,
   },
-  productImage: {
+  productBlur: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    right: 0,
+    left: 0,
+    backgroundColor: "#ffffffaa",
+    zIndex: 999,
+  },
+  productImg: {
     width: "100%",
     height: 210,
   },
-  productContent: {
+  productContents: {
     padding: 8,
   },
   productSeller: {
     flexDirection: "row",
-    alignItems: "center",
   },
   productAvatar: {
     width: 24,
@@ -105,26 +166,25 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   productName: {
-    fontSize: 16,
+    fontSize: 14,
   },
   productPrice: {
-    fontSize: 18,
-    fontWeight: 600,
+    fontSize: 16,
+    fontWeight: "600",
     marginTop: 8,
   },
-  prodcutSellerName: {
-    fontSize: 16,
+  productSellerName: {
+    fontSize: 14,
   },
   productDate: {
-    fontSize: 16,
-    color: "gray",
+    fontSize: 14,
   },
   productList: {
     alignItems: "center",
   },
-  HeadLine: {
-    fontSize: 24,
-    fontWeight: 800,
-    marginBottom: 24,
+  bannerImage: {
+    width: "100%",
+    height: 200,
+    padding: 0,
   },
 });
