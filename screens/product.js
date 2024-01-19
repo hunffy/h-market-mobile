@@ -14,10 +14,11 @@ import axios from "axios";
 import { API_URL } from "../config/constants";
 import AvatarImage from "../assets/icons/avatar.png";
 import dayjs from "dayjs";
-
+import ProductCard from "../components/productCard";
 export default function ProductScreen(props) {
   const { id } = props.route.params;
   const [product, setProduct] = useState(null);
+  const [products, setProducts] = useState([]);
 
   useEffect(() => {
     axios
@@ -29,7 +30,16 @@ export default function ProductScreen(props) {
       .catch((error) => {
         console.log("error : ", error);
       });
-  }, []);
+    axios
+      .get(`${API_URL}/products/${id}/recommendation`)
+      .then((result) => {
+        console.log("추천상품 :", result.data.products);
+        setProducts(result.data.products);
+      })
+      .catch((error) => {
+        console.log("추천상품에러", error);
+      });
+  }, [id]);
   const onPressButton = () => {
     if (product.soldout !== 1) {
       Alert.alert("구매가 완료되었습니다.");
@@ -69,6 +79,19 @@ export default function ProductScreen(props) {
               {dayjs(product.createdAt).format("YYYY년 MM월 DD일")}
             </Text>
             <Text style={styles.productDescription}>{product.description}</Text>
+          </View>
+          <View style={styles.divider} />
+          <Text style={styles.recommendationHeadLine}>추천상품</Text>
+          <View style={styles.recommendationBox}>
+            {products.map((product, index) => {
+              return (
+                <ProductCard
+                  product={product}
+                  key={index}
+                  navigation={props.navigation}
+                />
+              );
+            })}
           </View>
         </View>
       </ScrollView>
@@ -131,6 +154,7 @@ const styles = StyleSheet.create({
   productDescription: {
     marginTop: 16,
     fontSize: 16,
+    marginBottom: 32,
   },
   purchaseButton: {
     position: "absolute",
@@ -156,5 +180,13 @@ const styles = StyleSheet.create({
     backgroundColor: "gray",
     alignItems: "center",
     justifyContent: "center",
+  },
+  recommendationBox: {
+    alignItems: "center",
+    marginTop: 16,
+    paddingBottom: 70,
+  },
+  recommendationHeadLine: {
+    fontSize: 30,
   },
 });

@@ -11,7 +11,6 @@ import {
 } from "react-native";
 
 import { API_URL } from "../config/constants.js";
-import avatarImg from "../assets/icons/avatar.png";
 
 import Carousel from "react-native-reanimated-carousel";
 
@@ -19,6 +18,7 @@ import axios from "axios";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/ko";
+import ProductCard from "../components/productCard.js";
 
 dayjs.extend(relativeTime);
 dayjs.locale("ko");
@@ -81,42 +81,11 @@ export default function MainScreen(props) {
         <View style={styles.productList}>
           {products.map((product, index) => {
             return (
-              <TouchableOpacity
-                onPress={() => {
-                  props.navigation.navigate("Product", { id: product.id });
-                }}
-              >
-                <View key={index} style={styles.productCard}>
-                  {product.soldout === 1 && <View style={styles.productBlur} />}
-                  <View>
-                    <Image
-                      style={styles.productImg}
-                      source={{
-                        url: `${API_URL}/${product.imageUrl}`,
-                      }}
-                      resizeMode={"contain"}
-                    />
-                  </View>
-                  <View style={styles.productContents}>
-                    <Text style={styles.productName}>{product.name}</Text>
-                    <Text style={styles.productPrice}>{product.price}원</Text>
-                    <View style={styles.productFooter}>
-                      <View style={styles.productSeller}>
-                        <Image
-                          style={styles.productAvatar}
-                          source={avatarImg}
-                        />
-                        <Text style={styles.productSellerName}>
-                          {product.seller}
-                        </Text>
-                      </View>
-                      <Text style={styles.productDate}>
-                        {dayjs(product.created_at).fromNow()}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </TouchableOpacity>
+              <ProductCard
+                product={product}
+                key={index}
+                navigation={props.navigation}
+              />
             );
           })}
         </View>
